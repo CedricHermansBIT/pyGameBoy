@@ -1,0 +1,214 @@
+#import threading
+import time
+import pygame
+from threading import Thread
+
+from graphics import *
+from interrupts import *
+from memory_control import *
+from opcodes import extra_opcodes, opcodes
+from utils import *
+from cpu import *
+#from read_header import read_header
+
+log = 0
+ppu = 1
+
+
+A, B, C, D, E, H, L = 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+F = [0, 0, 0, 0, 0, 0, 0, 0]
+SP = 0x0000
+MEMORY = [0]*0x100
+IME = False
+CLOCKSUM = 0
+TIMER_CLOCKSUM = 0
+# print(MEMORY)
+FC = 0
+HALT = 0
+
+MAXCYCLE = 69905
+
+
+if log:
+    disassembled_file = open("disassembled.txt", "w")
+
+
+def runCode(pointer, interrupt_table):
+    global A, B, C, D, E, F, H, L, SP, MEMORY, IME, HALT, CLOCKSUM, TIMER_CLOCKSUM, FC
+
+
+
+    #pygame
+    pygame.init()
+    pygame.display.set_caption("Gameboy Emulator")
+    #resizable
+    screen = pygame.display.set_mode((160*4, 144*4), pygame.RESIZABLE)
+    background = pygame.Surface(screen.get_size())
+    background = background.convert()
+    background.fill((0, 0, 0))
+
+    # keys
+    keys={"LEFT": 1, "RIGHT": 1, "UP": 1, "DOWN": 1, "A": 1, "B": 1, "SELECT": 1, "START": 1}
+
+    prefix = False
+    # get current time
+    dt = time.time()
+    counter = 0
+    cycles = 0
+    boot = True
+    cartridge_type = MEMORY[0x147]
+    if cartridge_type == 0x00:
+        bank_controller = 0
+    elif cartridge_type == 0x13:
+        bank_controller = 3
+    elif cartridge_type == 0x1:
+        bank_controller = 0
+    else:
+        assert False, f"Cartridge type not supported: {cartridge_type}"
+    # spawn ppu thread
+    stop=False
+    ppu_thread = Thread(target=PPU_THREAD, args=(lambda: MEMORY,screen,lambda: stop))
+    ppu_thread.start()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                stop=True
+
+                ppu_thread.join()
+                pygame.quit()
+                return
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    keys["RIGHT"] = 0
+                elif event.key == pygame.K_LEFT:
+                    keys["LEFT"] = 0
+                elif event.key == pygame.K_UP:
+                    keys["UP"] = 0
+                elif event.key == pygame.K_DOWN:
+                    keys["DOWN"] = 0
+                elif event.key == pygame.K_a:
+                    keys["A"] = 0
+                elif event.key == pygame.K_s:
+                    keys["B"] = 0
+                elif event.key == pygame.K_RETURN:
+                    keys["START"] = 0
+                elif event.key == pygame.K_BACKSPACE:
+                    keys["SELECT"] = 0
+                # set interupt
+                writeMem(MEMORY, 0xFF0F, readMem(MEMORY, 0xFF0F, bank_controller) | 0x10, bank_controller)
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_RIGHT:
+                    keys["RIGHT"] = 1
+                elif event.key == pygame.K_LEFT:
+                    keys["LEFT"] = 1
+                elif event.key == pygame.K_UP:
+                    keys["UP"] = 1
+                elif event.key == pygame.K_DOWN:
+                    keys["DOWN"] = 1
+                elif event.key == pygame.K_a:
+                    keys["A"] = 1
+                elif event.key == pygame.K_s:
+                    keys["B"] = 1
+                elif event.key == pygame.K_RETURN:
+                    keys["START"] = 1
+                elif event.key == pygame.K_BACKSPACE:
+                    keys["SELECT"] = 1
+
+        # if pointer == 0x86:
+        #    print("debug step")
+        if time.time() - dt > 1.0/60.0:
+            if MEMORY[0xFF40] & 0x80:
+                counter = 0
+                MEMORY[0xFF44] = 0x90
+                MEMORY[0xFF0F] |= 0x01
+                dt = time.time()
+            cycles = 0
+        else:
+            if MEMORY[0xFF40] & 0x80:
+                counter += 1
+                if counter >= 0x90:
+                    MEMORY[0xFF44] += 1
+                if MEMORY[0xFF44] >= 153:
+                    MEMORY[0xFF44] = 0
+                    MEMORY[0xFF0F] &= 0x0
+            if cycles >= MAXCYCLE:
+                continue
+
+        if len(MEMORY) <= pointer:
+            print(f"End of file reached, pointer: {pointer}")
+            break
+        code = readMem(MEMORY, pointer, bank_controller)
+        # if pointer>0x4000:
+        #    print(hex(code),hex(pointer))
+        if not HALT:
+            ctime=time.time()
+            # check if code is not in opcodes or if the prefix is set and it is not in extropcodes
+            if (code not in opcodes and not prefix) or (prefix and code not in extra_opcodes):
+
+                print(f"Unknown opcode: {hex(code)}")
+                print(f"Pointer: {hex(pointer)}")
+                print(f"Prefix: {prefix}")
+                # Stack
+                print(f"Stack: {hex(readMem(MEMORY,SP,bank_controller))} {hex(readMem(MEMORY,SP+1,bank_controller))} {hex(readMem(MEMORY,SP+2,bank_controller))} {hex(readMem(MEMORY,SP+3,bank_controller))} {hex(readMem(MEMORY,SP+4,bank_controller))} {hex(readMem(MEMORY,SP+5,bank_controller))} {hex(readMem(MEMORY,SP+6,bank_controller))} {hex(readMem(MEMORY,SP+7,bank_controller))}")
+                print(MEMORY[0x9910:0x9999])
+                if log:
+                    disassembled_file.close()
+                # RENDER_VRAM(MEMORY)
+                exit(1)
+            if not prefix:
+                if log:
+                    disassembled_file.write(
+                        f"PC: {pointer:04x}\t{opcodes[code]:<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1,bank_controller):02x}\tPC+2: {readMem(MEMORY,pointer+2,bank_controller):02x}")
+                A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, prefix = handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,keys)
+                if log:
+                    disassembled_file.write(
+                        f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n")
+            if prefix:
+                code = readMem(MEMORY, pointer, bank_controller)
+                if code not in extra_opcodes:
+                    print("Unknown opcode: " + hex(code))
+                    exit()
+                if log:
+                    disassembled_file.write(
+                        f"PC: {pointer:04x}\t{extra_opcodes[code]:<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1,bank_controller):02x}\tPC+2: {readMem(MEMORY,pointer+2,bank_controller):02x}")
+                A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle = handle_extra_opcodes(code, A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, bank_controller)
+                if log:
+                    disassembled_file.write(
+                        f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n")
+                prefix = False
+        else:
+            cycle = 1
+            # print("Halting")
+        cycles += cycle
+        MEMORY, CLOCKSUM, TIMER_CLOCKSUM = handle_timer(
+            cycle, MEMORY, CLOCKSUM, TIMER_CLOCKSUM)
+        pointer, MEMORY, IME, SP, HALT = handle_interrupts(
+            MEMORY, pointer, IME, SP, HALT, bank_controller)
+
+        # print(f"F: {F}")
+        if pointer == 0x100 and boot:
+            boot = False
+            # copy the interupt table to the beginning of the memory
+            MEMORY[0:0x100] = interrupt_table
+
+
+f = open("DMG_ROM.bin", "rb")
+content = f.read()
+f.close()
+# print(content)
+MEMORY[0x0:0x100] = content
+
+f = open("Dr. Mario (World).gb", "rb")
+#f=open("Pokemon - Red Version.gb", "rb")
+#f=open("instr_timing.gb", "rb")
+#f=open("cpu_instrs.gb", "rb")
+content2 = f.read()
+f.close()
+# exit()
+# copy header (0x100:0x0150) to memory
+MEMORY += content2[0x100:]
+if len(MEMORY) < 0x10000:
+    MEMORY += [0]*(0x10000-len(MEMORY))
+
+runCode(0x0, interrupt_table=content2[0:0x100])
