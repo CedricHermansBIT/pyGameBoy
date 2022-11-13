@@ -8,9 +8,9 @@
 
 ## Usage
 
-Within read_gb.py, change the path to the ROM you want to play on line 202
+In config.txt, set the first line to the path of the ROM you want to run.
 
-Run the program from within the directory that contains the python scripts and DMG_ROM.bin
+Run the read_gb.py program from within the directory that contains the python scripts and DMG_ROM.bin
 
 ```bash
 python3 read_gb.py
@@ -29,5 +29,9 @@ No sound yet.
 
 - Add sound
 - Add memory banking for other mbcs
-- Fix halt bug for 02-interrupts.gb
 - Add save states
+- Check what is wrong with specific ROMs
+
+## Working ROMs (Tested, might still contain bugs, but they are playable)
+
+- Dr. Mario (World).gb
