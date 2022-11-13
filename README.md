@@ -22,13 +22,12 @@ Arrow keys + A, S (would be B on gameboy), ENTER, BACKSPACE
 
 ## Notes
 
-At the moment, only ROMS without memory banking work.
+At the moment, only ROMS without memory banking or memory bank controller 3 (kinda) work.
 No sound yet.
-Timer is not working properly yet.
 
 ## TODO
 
 - Add sound
-- Fix timer
-- Add memory banking
+- Add memory banking for other mbcs
+- Fix halt bug for 02-interrupts.gb
 - Add save states
