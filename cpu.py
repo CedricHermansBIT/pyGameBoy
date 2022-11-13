@@ -7,7 +7,6 @@ from memory_control import *
 
 def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,keys,game):
     HALT=0
-    prefix = False
     match opcodes[code]:
         case "NOP":
             # print("NOP")
@@ -1326,9 +1325,10 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
                 cycle = 3
         case "PREFCB":
             # print("PREFCB")
-            prefix = True
             pointer += 1
-            cycle = 2
+            code= readMem(MEMORY, pointer, bank_controller)
+            A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle = handle_extra_opcodes(code, A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, bank_controller,game)
+
         case "CALLZA16":
             # print("CALLZA16")
             if F[7] == 1:
@@ -1685,7 +1685,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
 
         case other:
             assert False, f"Unknown opcode: {code:02x}"
-    return A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, prefix, HALT
+    return A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, HALT
 
 def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,game):
     match extra_opcodes[code]:

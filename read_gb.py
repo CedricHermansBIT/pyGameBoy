@@ -50,7 +50,6 @@ def runCode(pointer, game):
     # keys
     keys={"LEFT": 1, "RIGHT": 1, "UP": 1, "DOWN": 1, "A": 1, "B": 1, "SELECT": 1, "START": 1}
 
-    prefix = False
     # get current time
     dt = time.time()
     counter = 0
@@ -138,40 +137,17 @@ def runCode(pointer, game):
         code = readMem(MEMORY, pointer, bank_controller)
         if not HALT:
             ctime=time.time()
-            # check if code is not in opcodes or if the prefix is set and it is not in extropcodes
-            if (code not in opcodes and not prefix) or (prefix and code not in extra_opcodes):
 
-                print(f"Unknown opcode: {hex(code)}")
-                print(f"Pointer: {hex(pointer)}")
-                print(f"Prefix: {prefix}")
-                # Stack
-                print(f"Stack: {hex(readMem(MEMORY,SP,bank_controller))} {hex(readMem(MEMORY,SP+1,bank_controller))} {hex(readMem(MEMORY,SP+2,bank_controller))} {hex(readMem(MEMORY,SP+3,bank_controller))} {hex(readMem(MEMORY,SP+4,bank_controller))} {hex(readMem(MEMORY,SP+5,bank_controller))} {hex(readMem(MEMORY,SP+6,bank_controller))} {hex(readMem(MEMORY,SP+7,bank_controller))}")
-                print(MEMORY[0x9910:0x9999])
-                if log:
-                    disassembled_file.close()
-                # RENDER_VRAM(MEMORY)
-                exit(1)
-            if not prefix:
-                if log:
-                    disassembled_file.write(f"PC: {pointer:04x}\t{opcodes[code]:<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1,bank_controller):02x}\tPC+2: {readMem(MEMORY,pointer+2,bank_controller):02x}")
-                A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, prefix, halt = handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,keys,game)
-                if log:
-                    disassembled_file.write(
-                        f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n")
-            if prefix:
-                code = readMem(MEMORY, pointer, bank_controller)
-                if code not in extra_opcodes:
-                    print("Unknown opcode: " + hex(code))
-                    exit()
-                if log:
-                    disassembled_file.write(
-                        f"PC: {pointer:04x}\t{extra_opcodes[code]:<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1,bank_controller):02x}\tPC+2: {readMem(MEMORY,pointer+2,bank_controller):02x}")
-                A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle = handle_extra_opcodes(code, A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, bank_controller,game)
-                if log:
-                    disassembled_file.write(
-                        f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n")
-                prefix = False
+            if log:
+                disassembled_file.write(f"PC: {pointer:04x}\t{opcodes[code]:<8} {extra_opcodes[readMem(MEMORY,pointer+1,bank_controller)] if opcodes[code]=='PREFCB' else '':<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1,bank_controller):02x}\tPC+2: {readMem(MEMORY,pointer+2,bank_controller):02x}")
+            
+            A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, HALT = handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,keys,game)
+            
+            if log:
+                disassembled_file.write(
+                    f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n")
         else:
+            print("Halting!")
             cycle = 1
 
         cycles += cycle
