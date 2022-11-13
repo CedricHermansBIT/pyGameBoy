@@ -3,7 +3,7 @@ from memory_control import readMem, writeMem
 def handle_events(keys, MEMORY):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            return True
+            return keys,True
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
                 keys["RIGHT"] = 0
@@ -40,3 +40,4 @@ def handle_events(keys, MEMORY):
                 keys["START"] = 1
             elif event.key == pygame.K_BACKSPACE:
                 keys["SELECT"] = 1
+    return keys,False
