@@ -5,12 +5,12 @@ from threading import Thread
 
 from graphics import PPU_THREAD
 from interrupts import handle_interrupts, handle_timer
-from memory_control import readMem, writeMem
+from memory_control import readMem
 from opcodes import extra_opcodes, opcodes
 from cpu import handle_opcode
 from events import handle_events
 
-log = 1
+log = 0
 ppu = 1
 
 
@@ -23,12 +23,12 @@ HALT = 0
 
 MAXCYCLE = 69905
 
-
 if log:
     disassembled_file = open("disassembled.txt", "w")
 
 
 def runCode(pointer):
+    l=""
     global A, B, C, D, E, F, H, L, SP, MEMORY, IME, HALT
 
 
@@ -57,11 +57,13 @@ def runCode(pointer):
     ppu_thread.start()
 
     while True:
-        keys = handle_events(keys, MEMORY)
-        if keys==True:
-            stop=True
+        keys,stop = handle_events(keys, MEMORY)
+        if stop==True:
             ppu_thread.join()
             pygame.quit()
+            if log:
+                disassembled_file.write(l)
+                disassembled_file.close()
             return True
 
 
@@ -90,15 +92,17 @@ def runCode(pointer):
             ctime=time.time()
 
             if log:
-                disassembled_file.write(f"PC: {pointer:04x}\t{opcodes[code]:<8} {extra_opcodes[readMem(MEMORY,pointer+1)] if opcodes[code]=='PREFCB' else '':<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1):02x}\tPC+2: {readMem(MEMORY,pointer+2):02x}")
+                l+=f"PC: {pointer:04x}\t{opcodes[code]:<8} {extra_opcodes[readMem(MEMORY,pointer+1)] if opcodes[code]=='PREFCB' else '':<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1):02x}\tPC+2: {readMem(MEMORY,pointer+2):02x}"
             
             A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, HALT = handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,keys)
             
             if log:
-                disassembled_file.write(
-                    f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n")
+                l+=f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n"
+                if len(l)>10000:
+                    disassembled_file.write(l)
+                    l=""
         else:
-            print("Halting!")
+            #print("Halting!")
             cycle = 1
 
         cycles += cycle
