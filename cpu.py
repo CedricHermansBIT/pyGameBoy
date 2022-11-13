@@ -5,7 +5,7 @@ from memory_control import *
 
 
 
-def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,keys,game):
+def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,keys):
     HALT=0
     match opcodes[code]:
         case "NOP":
@@ -14,13 +14,13 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDBCA16":
             # print("LDBCA16")
-            B = readMem(MEMORY, pointer+2, bank_controller)
-            C = readMem(MEMORY, pointer+1, bank_controller)
+            B = readMem(MEMORY, pointer+2)
+            C = readMem(MEMORY, pointer+1)
             pointer += 3
             cycle = 3
         case "LDHBCA":
             # print("LDHBCA")
-            writeMem(MEMORY, joinHex(B, C), A, bank_controller, game)
+            writeMem(MEMORY, joinHex(B, C), A)
             pointer += 1
             cycle = 2
         case "INCBC":
@@ -48,7 +48,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDB":
             # print("LDB")
-            B = readMem(MEMORY, pointer+1, bank_controller)
+            B = readMem(MEMORY, pointer+1)
             pointer += 2
             cycle = 2
         case "RLCA":
@@ -60,9 +60,9 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDA16SP":
             # print("LDA16SP")
-            a16=joinHex(readMem(MEMORY, pointer+2, bank_controller), readMem(MEMORY, pointer+1, bank_controller))
-            writeMem(MEMORY, a16, SP & 0xFF, bank_controller, game)
-            writeMem(MEMORY, a16+1, SP>>8 , bank_controller, game)
+            a16=joinHex(readMem(MEMORY, pointer+2), readMem(MEMORY, pointer+1))
+            writeMem(MEMORY, a16, SP & 0xFF)
+            writeMem(MEMORY, a16+1, SP>>8 )
             pointer += 3
             cycle = 5
         case "ADDHLBC":
@@ -78,7 +78,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 2
         case "LDABC":
             # print("LDABC")
-            A = readMem(MEMORY, joinHex(B, C), bank_controller)
+            A = readMem(MEMORY, joinHex(B, C))
             pointer += 1
             cycle = 2
         case "DECBC":
@@ -105,7 +105,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDC":
             # print("LDC")
-            C = readMem(MEMORY, pointer+1, bank_controller)
+            C = readMem(MEMORY, pointer+1)
             pointer += 2
             cycle = 2
         case "RRCA":
@@ -121,13 +121,13 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 0
         case "LDDED16":
             # print("LDDED16")
-            D = readMem(MEMORY, pointer+2, bank_controller)
-            E = readMem(MEMORY, pointer+1, bank_controller)
+            D = readMem(MEMORY, pointer+2)
+            E = readMem(MEMORY, pointer+1)
             pointer += 3
             cycle = 3
         case "LDHDEA":
             # print("LDHDEA")
-            writeMem(MEMORY, joinHex(D,E), A, bank_controller, game)
+            writeMem(MEMORY, joinHex(D,E), A)
             pointer += 1
             cycle = 2
         case "INCDE":
@@ -153,7 +153,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDD":
             # print("LDD")
-            D = readMem(MEMORY, pointer+1, bank_controller)
+            D = readMem(MEMORY, pointer+1)
             pointer += 2
             cycle = 2
         case "RLA":
@@ -171,7 +171,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "JR":
             # print("JR")
             pointer += signed(readMem(MEMORY,
-                                pointer+1, bank_controller)) + 2
+                                pointer+1)) + 2
             cycle = 3
         case "ADDHLDE":
             # print("ADDHLDE")
@@ -187,7 +187,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 2
         case "LDADE":
             # print("LDADE")
-            A = readMem(MEMORY, joinHex(D,E), bank_controller)
+            A = readMem(MEMORY, joinHex(D,E))
             # input()
             pointer += 1
             cycle = 2
@@ -214,7 +214,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDE":
             # print("LDE")
-            E = readMem(MEMORY, pointer+1, bank_controller)
+            E = readMem(MEMORY, pointer+1)
             pointer += 2
             cycle = 2
         case "RRA":
@@ -229,16 +229,16 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "JRNZ":
             # print("JRNZ")
-            pointer,cycle = (pointer+signed(readMem(MEMORY,pointer+1,bank_controller))+2,3) if F[7]==0 else (pointer+2,2)
+            pointer,cycle = (pointer+signed(readMem(MEMORY,pointer+1))+2,3) if F[7]==0 else (pointer+2,2)
         case "LDHL16":
             # print("LDHL16")
-            H = readMem(MEMORY, pointer+2, bank_controller)
-            L = readMem(MEMORY, pointer+1, bank_controller)
+            H = readMem(MEMORY, pointer+2)
+            L = readMem(MEMORY, pointer+1)
             pointer += 3
             cycle = 3
         case "LDHL+A":
             # print("LDHL+A")
-            writeMem(MEMORY, joinHex(H,L), A, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), A)
             H, L = splitHex(joinHex(H,L) + 1)
             pointer += 1
             cycle = 2
@@ -265,7 +265,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDHA8":
             # print("LDHA8")
-            H = readMem(MEMORY, pointer+1, bank_controller)
+            H = readMem(MEMORY, pointer+1)
             pointer += 2
             cycle = 2
         case "DAA":
@@ -315,7 +315,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print("JRZ")
             if F[7] == 1:
                 pointer += signed(readMem(MEMORY,
-                                    pointer+1, bank_controller)) + 2
+                                    pointer+1)) + 2
                 cycle = 3
                 # print(hex(pointer))
                 # pointer += MEMORY[pointer+1] + 1
@@ -336,7 +336,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "LDAHL+":
             # print("LDAHL+")
             # print(joinHex(H,L))
-            A = readMem(MEMORY, joinHex(H,L), bank_controller)
+            A = readMem(MEMORY, joinHex(H,L))
             H, L = splitHex(joinHex(H,L) + 1)
             pointer += 1
             cycle = 2
@@ -364,7 +364,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDL":
             # print("LDL")
-            L = readMem(MEMORY, pointer+1, bank_controller)
+            L = readMem(MEMORY, pointer+1)
             pointer += 2
             cycle = 2
         case "CPLM":
@@ -379,7 +379,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print("JRNCR8")
             if F[4] == 0:
                 pointer += signed(readMem(MEMORY,
-                                    pointer+1, bank_controller)) + 2
+                                    pointer+1)) + 2
                 cycle = 3
             else:
                 pointer += 2
@@ -387,12 +387,12 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "LDSP16":
             # print("LDSP16")
             SP = readMem(
-                MEMORY, pointer+2, bank_controller) << 8 | readMem(MEMORY, pointer+1, bank_controller)
+                MEMORY, pointer+2) << 8 | readMem(MEMORY, pointer+1)
             pointer += 3
             cycle = 3
         case "LDHL-A":
             # print("LDHL-A")
-            writeMem(MEMORY, joinHex(H,L), A, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), A)
             H, L = splitHex(joinHex(H,L) - 1)
             pointer += 1
             cycle = 2
@@ -404,23 +404,23 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "INCHHL":
             # print("INCHL")
             F[5] = 0 if (
-                readMem(MEMORY, joinHex(H,L), bank_controller) & 0x7) + 1 <= 0x7 else 1
-            writeMem(MEMORY, joinHex(H,L), (readMem(MEMORY, joinHex(H,L),bank_controller) + 1) & 0xFF, bank_controller, game)
-            F[7] = int(readMem(MEMORY, joinHex(H,L), bank_controller) == 0)
+                readMem(MEMORY, joinHex(H,L)) & 0x7) + 1 <= 0x7 else 1
+            writeMem(MEMORY, joinHex(H,L), (readMem(MEMORY, joinHex(H,L)) + 1) & 0xFF)
+            F[7] = int(readMem(MEMORY, joinHex(H,L)) == 0)
             F[6] = 0
             pointer += 1
             cycle = 3
         case "DECHHL":
             # print("DECHL")
-            writeMem(MEMORY, joinHex(H,L), (readMem(MEMORY, joinHex(H,L),bank_controller) - 1) & 0xFF, bank_controller, game)
-            F[5] = int((readMem(MEMORY, joinHex(H,L), bank_controller)&0xf)==0xf)
-            F[7] = int(readMem(MEMORY, joinHex(H,L), bank_controller) == 0)
+            writeMem(MEMORY, joinHex(H,L), (readMem(MEMORY, joinHex(H,L)) - 1) & 0xFF)
+            F[5] = int((readMem(MEMORY, joinHex(H,L))&0xf)==0xf)
+            F[7] = int(readMem(MEMORY, joinHex(H,L)) == 0)
             F[6] = 1
             pointer += 1
             cycle = 3
         case "LDHLA8":
             # print("LDHLA8")
-            writeMem(MEMORY, joinHex(H,L), readMem(MEMORY, pointer+1, bank_controller), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), readMem(MEMORY, pointer+1))
             pointer += 2
             cycle = 3
         case "SCF":
@@ -434,7 +434,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print("JRCR8")
             if F[4] == 1:
                 pointer += signed(readMem(MEMORY,
-                                    pointer+1, bank_controller)) + 2
+                                    pointer+1)) + 2
                 cycle = 3
             else:
                 pointer += 2
@@ -450,7 +450,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 2
         case "LDAHL-":
             # print("LDAHL-")
-            A = readMem(MEMORY, joinHex(H,L), bank_controller)
+            A = readMem(MEMORY, joinHex(H,L))
             hl = joinHex(H,L)
             hl -= 1
             H = (hl >> 8) & 0xFF
@@ -481,7 +481,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDA":
             # print("LDA")
-            A = readMem(MEMORY, pointer+1, bank_controller)
+            A = readMem(MEMORY, pointer+1)
             pointer += 2
             cycle = 2
         case "CCF":
@@ -523,7 +523,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDBHL":
             # print("LDBHL")
-            B = readMem(MEMORY, joinHex(H,L), bank_controller)
+            B = readMem(MEMORY, joinHex(H,L))
             pointer += 1
             cycle = 2
         case "LDBA":
@@ -563,7 +563,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDCHL":
             # print("LDCHL")
-            C = readMem(MEMORY, joinHex(H,L), bank_controller)
+            C = readMem(MEMORY, joinHex(H,L))
             pointer += 1
             cycle = 2
         case "LDCA":
@@ -603,7 +603,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDDHL":
             # print("LDDHL")
-            D = readMem(MEMORY, joinHex(H,L), bank_controller)
+            D = readMem(MEMORY, joinHex(H,L))
             pointer += 1
             cycle = 2
         case "LDDA":
@@ -642,7 +642,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDEHL":
             # print("LDEHL")
-            E = readMem(MEMORY, joinHex(H,L), bank_controller)
+            E = readMem(MEMORY, joinHex(H,L))
             pointer += 1
             cycle = 2
         case "LDEA":
@@ -682,7 +682,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDHHL":
             # print("LDHHL")
-            H = readMem(MEMORY, joinHex(H,L), bank_controller)
+            H = readMem(MEMORY, joinHex(H,L))
             pointer += 1
             cycle = 2
         case "LDHA":
@@ -723,7 +723,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDLHL":
             # print("LDLHL")
-            L = readMem(MEMORY, joinHex(H,L), bank_controller)
+            L = readMem(MEMORY, joinHex(H,L))
             pointer += 1
             cycle = 2
         case "LDLA":
@@ -734,32 +734,32 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDHLB":
             # print("LDHLB")
-            writeMem(MEMORY, joinHex(H,L), B, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), B)
             pointer += 1
             cycle = 2
         case "LDHLC":
             # print("LDHLC")
-            writeMem(MEMORY, joinHex(H,L), C, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), C)
             pointer += 1
             cycle = 2
         case "LDHLD":
             # print("LDHLD")
-            writeMem(MEMORY, joinHex(H,L), D, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), D)
             pointer += 1
             cycle = 2
         case "LDHLE":
             # print("LDHLE")
-            writeMem(MEMORY, joinHex(H,L), E, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), E)
             pointer += 1
             cycle = 2
         case "LDHLH":
             # print("LDHLH")
-            writeMem(MEMORY, joinHex(H,L), H, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), H)
             pointer += 1
             cycle = 2
         case "LDHLL":
             # print("LDHLL")
-            writeMem(MEMORY, joinHex(H,L), L, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), L)
             pointer += 1
             cycle = 2
         case "HALT":
@@ -775,7 +775,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "LDHLA":
             # Store value in A into memory address HL
             # print("LDHLA")
-            writeMem(MEMORY, joinHex(H,L), A, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), A)
             pointer += 1
             cycle = 2
         case "LDAB":
@@ -811,7 +811,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "LDAHL":
             # Load value into A from memory address HL
             # print("LDAHL")
-            A = readMem(MEMORY, joinHex(H,L), bank_controller)
+            A = readMem(MEMORY, joinHex(H,L))
             pointer += 1
             cycle = 2
         case "LDAA":
@@ -851,7 +851,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "ADDAHL":
             # print("ADDAHL")
-            A,F=ADDAR8(A,readMem(MEMORY, joinHex(H,L), bank_controller),F)
+            A,F=ADDAR8(A,readMem(MEMORY, joinHex(H,L)),F)
             pointer += 1
             cycle = 2
         case "ADDAA":
@@ -891,7 +891,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "ADCAHL":
             # print("ADCAHL")
-            A,F=ADCAR8(A,readMem(MEMORY, joinHex(H,L), bank_controller),F)
+            A,F=ADCAR8(A,readMem(MEMORY, joinHex(H,L)),F)
             pointer += 1
             cycle = 2
         case "ADCAA":
@@ -931,7 +931,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "SUBHL":
             # print("SUBHL")
-            A,F=SUBAR8(A,readMem(MEMORY, joinHex(H,L), bank_controller),F)
+            A,F=SUBAR8(A,readMem(MEMORY, joinHex(H,L)),F)
             pointer += 1
             cycle = 2
         case "SUBA":
@@ -971,7 +971,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "SBCAHL":
             # print("SBCAHL")
-            A,F=SBCAR8(A,readMem(MEMORY, joinHex(H,L), bank_controller),F)
+            A,F=SBCAR8(A,readMem(MEMORY, joinHex(H,L)),F)
             pointer += 1
             cycle = 2
         case "SBCAA":
@@ -1023,7 +1023,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "ANDHL":
             # print("ANDHL")
-            A = A & readMem(MEMORY, joinHex(H,L), bank_controller)
+            A = A & readMem(MEMORY, joinHex(H,L))
             F[7] = int(A == 0)
             F[4:7] = [0, 1, 0]
             pointer += 1
@@ -1079,7 +1079,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "XORHL":
             # print("XORHL")
-            A = A ^ readMem(MEMORY, joinHex(H,L), bank_controller)
+            A = A ^ readMem(MEMORY, joinHex(H,L))
             F[7] = int(A == 0)
             F[4:7] = [0, 0, 0]
             pointer += 1
@@ -1135,7 +1135,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "ORHL":
             # print("ORHL")
-            A = A | readMem(MEMORY, joinHex(H,L), bank_controller)
+            A = A | readMem(MEMORY, joinHex(H,L))
             F[7] = int(A == 0)
             F[4:7] = [0, 0, 0]
             pointer += 1
@@ -1197,10 +1197,10 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "CPHL":
             # print("CPHL")
-            F[7] = int(A == readMem(MEMORY, joinHex(H,L), bank_controller))
+            F[7] = int(A == readMem(MEMORY, joinHex(H,L)))
             F[6] = 1
-            F[5] = int((A & 0xF) < (readMem(MEMORY, joinHex(H,L), bank_controller) & 0xF))
-            F[4] = int(A < readMem(MEMORY, joinHex(H,L), bank_controller))
+            F[5] = int((A & 0xF) < (readMem(MEMORY, joinHex(H,L)) & 0xF))
+            F[4] = int(A < readMem(MEMORY, joinHex(H,L)))
             pointer += 1
             cycle = 2
         case "CPA":
@@ -1215,9 +1215,9 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "RETNZ":
             # print("RETNZ")
             if F[7] == 0:
-                l = readMem(MEMORY, SP, bank_controller)
+                l = readMem(MEMORY, SP)
                 SP += 1
-                h = readMem(MEMORY, SP, bank_controller)
+                h = readMem(MEMORY, SP)
                 SP += 1
                 pointer = (h << 8) | l
                 cycle = 5
@@ -1226,25 +1226,25 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
                 cycle = 2
         case "POPBC":
             # print("POPBC")
-            C = readMem(MEMORY, SP, bank_controller)
+            C = readMem(MEMORY, SP)
             SP += 1
-            B = readMem(MEMORY, SP, bank_controller)
+            B = readMem(MEMORY, SP)
             SP += 1
             pointer += 1
             cycle = 3
         case "JPNZA16":
             # print("JPNZA16")
             if F[7] == 0:
-                pointer = (readMem(MEMORY, pointer+2, bank_controller)
-                            << 8) | readMem(MEMORY, pointer+1, bank_controller)
+                pointer = (readMem(MEMORY, pointer+2)
+                            << 8) | readMem(MEMORY, pointer+1)
                 cycle = 4
             else:
                 pointer += 3
                 cycle = 3
         case "JP":
             # print("JP")
-            h = readMem(MEMORY, pointer+1, bank_controller)
-            l = readMem(MEMORY, pointer+2, bank_controller)
+            h = readMem(MEMORY, pointer+1)
+            l = readMem(MEMORY, pointer+2)
             # print(pointer)
             pointer = l << 8 | h
             cycle = 4
@@ -1253,12 +1253,12 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print("CALLNZA16")
             if F[7] == 0:
                 SP -= 1
-                writeMem(MEMORY, SP, (pointer+3)>> 8, bank_controller, game)
+                writeMem(MEMORY, SP, (pointer+3)>> 8)
                 SP -= 1
-                writeMem(MEMORY, SP, (pointer+3)& 0xFF, bank_controller, game)
+                writeMem(MEMORY, SP, (pointer+3)& 0xFF)
                 # Jump to address
-                pointer = (readMem(MEMORY, pointer+2, bank_controller)
-                            << 8) | readMem(MEMORY, pointer+1, bank_controller)
+                pointer = (readMem(MEMORY, pointer+2)
+                            << 8) | readMem(MEMORY, pointer+1)
                 cycle = 6
             else:
                 pointer += 3
@@ -1266,19 +1266,18 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "PUSHBC":
             # print("PUSHBC")
             SP -= 1
-            writeMem(MEMORY, SP, B, bank_controller, game)
+            writeMem(MEMORY, SP, B)
             SP -= 1
-            writeMem(MEMORY, SP, C, bank_controller, game)
+            writeMem(MEMORY, SP, C)
             pointer += 1
             cycle = 4
         case "ADDA8":
             # print("ADDA8")
             F[5] = 1 if (
-                A & 0xF) + (readMem(MEMORY, pointer+1, bank_controller) & 0xF) > 0xF else 0
+                A & 0xF) + (readMem(MEMORY, pointer+1) & 0xF) > 0xF else 0
             F[4] = int(A + readMem(MEMORY, pointer +
-                        1, bank_controller) > 0xFF)
-            A = A + readMem(MEMORY, pointer+1,
-                            bank_controller) & 0xFF
+                        1) > 0xFF)
+            A = A + readMem(MEMORY, pointer+1) & 0xFF
             F[7] = int(A == 0)
             F[6] = 0
             pointer += 2
@@ -1286,17 +1285,17 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "RST00H":
             # print("RST00H")
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1)& 0xFF)
             pointer = 0x00
             cycle = 4
         case "RETZ":
             # print("RETZ")
             if F[7] == 1:
-                l = readMem(MEMORY, SP, bank_controller)
+                l = readMem(MEMORY, SP)
                 SP += 1
-                h = readMem(MEMORY, SP, bank_controller)
+                h = readMem(MEMORY, SP)
                 SP += 1
                 pointer = (h << 8) | l
                 cycle = 5
@@ -1308,17 +1307,17 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print VRAM
             # print(MEMORY[0x8000:0x8800])
             # exit()
-            l = readMem(MEMORY, SP, bank_controller)
+            l = readMem(MEMORY, SP)
             SP += 1
-            h = readMem(MEMORY, SP, bank_controller)
+            h = readMem(MEMORY, SP)
             SP += 1
             pointer = h << 8 | l
             cycle = 4
         case "JPZA16":
             # print("JPZA16")
             if F[7] == 1:
-                pointer = (readMem(MEMORY, pointer+2, bank_controller)
-                            << 8) | readMem(MEMORY, pointer+1, bank_controller)
+                pointer = (readMem(MEMORY, pointer+2)
+                            << 8) | readMem(MEMORY, pointer+1)
                 cycle = 4
             else:
                 pointer += 3
@@ -1326,18 +1325,18 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "PREFCB":
             # print("PREFCB")
             pointer += 1
-            code= readMem(MEMORY, pointer, bank_controller)
-            A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle = handle_extra_opcodes(code, A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, bank_controller,game)
+            code= readMem(MEMORY, pointer)
+            A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle = handle_extra_opcodes(code, A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer)
 
         case "CALLZA16":
             # print("CALLZA16")
             if F[7] == 1:
                 SP -= 1
-                writeMem(MEMORY, SP, (pointer+3)>> 8, bank_controller, game)
+                writeMem(MEMORY, SP, (pointer+3)>> 8)
                 SP -= 1
-                writeMem(MEMORY, SP, (pointer+3)& 0xFF, bank_controller, game)
-                pointer = (readMem(MEMORY, pointer+2, bank_controller)
-                            << 8) | readMem(MEMORY, pointer+1, bank_controller)
+                writeMem(MEMORY, SP, (pointer+3)& 0xFF)
+                pointer = (readMem(MEMORY, pointer+2)
+                            << 8) | readMem(MEMORY, pointer+1)
                 cycle = 6
             else:
                 pointer += 3
@@ -1346,22 +1345,22 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print("CALLA16")
             # Push address of next instruction to stack
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+3) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+3) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+3)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+3)& 0xFF)
             # Jump to address
-            h = readMem(MEMORY, pointer+1, bank_controller)
-            l = readMem(MEMORY, pointer+2, bank_controller)
+            h = readMem(MEMORY, pointer+1)
+            l = readMem(MEMORY, pointer+2)
             pointer = l << 8 | h
             #print(f"Jumped to {hex(pointer)}")
             cycle = 6
         case "ADCAA8":
             #CEDE
             # print("ADDCAA8")
-            tmp = A + readMem(MEMORY, pointer+1, bank_controller) + F[4]
+            tmp = A + readMem(MEMORY, pointer+1) + F[4]
             F[7] = int(tmp&0xff == 0)
             F[6] = 0
-            F[5] = int(((A&0x07) + (readMem(MEMORY, pointer+1, bank_controller)&0x7) + F[4]) > 0x7)
+            F[5] = int(((A&0x07) + (readMem(MEMORY, pointer+1)&0x7) + F[4]) > 0x7)
             F[4] = int(tmp>0xff)
             A=tmp&0xff
             pointer += 2
@@ -1369,17 +1368,17 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "RST08H":
             # print("RST08H")
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1)& 0xFF)
             pointer = 0x08
             cycle = 4
         case "RETNC":
             # print("RETNC")
             if F[4] == 0:
-                l = readMem(MEMORY, SP, bank_controller)
+                l = readMem(MEMORY, SP)
                 SP += 1
-                h = readMem(MEMORY, SP, bank_controller)
+                h = readMem(MEMORY, SP)
                 SP += 1
                 pointer = (h << 8) | l
                 cycle = 5
@@ -1388,16 +1387,16 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
                 cycle = 2
         case "POPDE":
             # print("POPDE")
-            E = readMem(MEMORY, SP, bank_controller)
-            D = readMem(MEMORY, SP+1, bank_controller)
+            E = readMem(MEMORY, SP)
+            D = readMem(MEMORY, SP+1)
             SP += 2
             pointer += 1
             cycle = 3
         case "JPNCA16":
             # print("JPNCA16")
             if F[4] == 0:
-                pointer = (readMem(MEMORY, pointer+2, bank_controller)
-                            << 8) | readMem(MEMORY, pointer+1, bank_controller)
+                pointer = (readMem(MEMORY, pointer+2)
+                            << 8) | readMem(MEMORY, pointer+1)
                 cycle = 4
             else:
                 pointer += 3
@@ -1406,11 +1405,11 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print("CALLNCA16")
             if F[4] == 0:
                 SP -= 1
-                writeMem(MEMORY, SP, (pointer+3)>> 8, bank_controller, game)
+                writeMem(MEMORY, SP, (pointer+3)>> 8)
                 SP -= 1
-                writeMem(MEMORY, SP, (pointer+3)& 0xFF, bank_controller, game)
-                pointer = (readMem(MEMORY, pointer+2, bank_controller)
-                            << 8) | readMem(MEMORY, pointer+1, bank_controller)
+                writeMem(MEMORY, SP, (pointer+3)& 0xFF)
+                pointer = (readMem(MEMORY, pointer+2)
+                            << 8) | readMem(MEMORY, pointer+1)
                 cycle = 6
             else:
                 pointer += 3
@@ -1418,37 +1417,36 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "PUSHDE":
             # print("PUSHDE")
             SP -= 1
-            writeMem(MEMORY, SP, D, bank_controller, game)
+            writeMem(MEMORY, SP, D)
             SP -= 1
-            writeMem(MEMORY, SP, E, bank_controller, game)
+            writeMem(MEMORY, SP, E)
             pointer += 1
             cycle = 4
         case "SUBA8":
             # print("SUBA8")
             F[6] = 1
             F[5] = 1 if (
-                (A & 0xF) - (readMem(MEMORY, pointer+1, bank_controller) & 0xF)) < 0 else 0
+                (A & 0xF) - (readMem(MEMORY, pointer+1) & 0xF)) < 0 else 0
             F[4] = int(
-                A - readMem(MEMORY, pointer+1, bank_controller) < 0)
-            A = A - readMem(MEMORY, pointer+1,
-                            bank_controller) & 0xFF
+                A - readMem(MEMORY, pointer+1) < 0)
+            A = A - readMem(MEMORY, pointer+1) & 0xFF
             F[7] = int(A == 0)
             pointer += 2
             cycle = 2
         case "RST10H":
             # print("RST10H")
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1)& 0xFF)
             pointer = 0x10
             cycle = 4
         case "RETC":
             # print("RETC")
             if F[4] == 1:
-                l = readMem(MEMORY, SP, bank_controller)
+                l = readMem(MEMORY, SP)
                 SP += 1
-                h = readMem(MEMORY, SP, bank_controller)
+                h = readMem(MEMORY, SP)
                 SP += 1
                 pointer = (h << 8) | l
                 cycle = 5
@@ -1458,9 +1456,9 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "RETI":
             # print("RETI")
             IME = True
-            l = readMem(MEMORY, SP, bank_controller)
+            l = readMem(MEMORY, SP)
             SP += 1
-            h = readMem(MEMORY, SP, bank_controller)
+            h = readMem(MEMORY, SP)
             SP += 1
             pointer = (h << 8) | l
             cycle = 4
@@ -1469,8 +1467,8 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "JPCA16":
             # print("JPCA16")
             if F[4] == 1:
-                pointer = (readMem(MEMORY, pointer+2, bank_controller)
-                            << 8) | readMem(MEMORY, pointer+1, bank_controller)
+                pointer = (readMem(MEMORY, pointer+2)
+                            << 8) | readMem(MEMORY, pointer+1)
                 cycle = 4
             else:
                 pointer += 3
@@ -1479,21 +1477,21 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print("CALLCA16")
             if F[4] == 1:
                 SP -= 1
-                writeMem(MEMORY, SP, (pointer+3)>> 8, bank_controller, game)
+                writeMem(MEMORY, SP, (pointer+3)>> 8)
                 SP -= 1
-                writeMem(MEMORY, SP, (pointer+3)& 0xFF, bank_controller, game)
-                pointer = (readMem(MEMORY, pointer+2, bank_controller)
-                            << 8) | readMem(MEMORY, pointer+1, bank_controller)
+                writeMem(MEMORY, SP, (pointer+3)& 0xFF)
+                pointer = (readMem(MEMORY, pointer+2)
+                            << 8) | readMem(MEMORY, pointer+1)
                 cycle = 6
             else:
                 pointer += 3
                 cycle = 3
         case "SBCA8":
             # print("SBCA8")
-            tmp = A - readMem(MEMORY, pointer+1, bank_controller) - F[4]
+            tmp = A - readMem(MEMORY, pointer+1) - F[4]
             F[7] = int(tmp&0xff == 0)
             F[6] = 1
-            F[5] = int(((A&0x07) - (readMem(MEMORY, pointer+1, bank_controller)&0x7) - F[4]) < 0)
+            F[5] = int(((A&0x07) - (readMem(MEMORY, pointer+1)&0x7) - F[4]) < 0)
             F[4] = int(tmp<0)
             A=tmp&0xff
 
@@ -1502,62 +1500,62 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "RST18H":
             # print("RST18H")
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1)& 0xFF)
             pointer = 0x18
             cycle = 4
         case "LDHA8A":
             # print("LDHA8A")
             writeMem(MEMORY, 0xFF00+readMem(MEMORY, pointer +
-                        1, bank_controller), A, bank_controller, game)
+                        1), A)
             pointer += 2
             cycle = 3
         case "POPHL":
             # print("POPHL")
-            L = readMem(MEMORY, SP, bank_controller)
+            L = readMem(MEMORY, SP)
             SP += 1
-            H = readMem(MEMORY, SP, bank_controller)
+            H = readMem(MEMORY, SP)
             SP += 1
             pointer += 1
             cycle = 3
         case "LDHCA":
             # print("LDHCA")
-            writeMem(MEMORY, 0xFF00+C, A, bank_controller, game)
+            writeMem(MEMORY, 0xFF00+C, A)
             pointer += 1
             cycle = 2
         case "PUSHHL":
             # print("PUSHL")
             SP -= 1
-            writeMem(MEMORY, SP, H, bank_controller, game)
+            writeMem(MEMORY, SP, H)
             SP -= 1
-            writeMem(MEMORY, SP, L, bank_controller, game)
+            writeMem(MEMORY, SP, L)
             pointer += 1
             cycle = 4
         case "ANDA8":
             # print("ANDA8")
             F[4:7] = [0, 1, 0]
-            A = A & readMem(MEMORY, pointer+1, bank_controller)
+            A = A & readMem(MEMORY, pointer+1)
             F[7] = int(A == 0)
             pointer += 2
             cycle = 2
         case "RST20H":
             # print("RST20H")
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1)& 0xFF)
             pointer = 0x20
             cycle = 4
         case "ADDSPR8":
             # print("ADDSPR8")
             F[6:8] = [0, 0]
             F[5] = 1 if (
-                SP & 0xF) + (readMem(MEMORY, pointer+1, bank_controller) & 0xF) > 0xF else 0
+                SP & 0xF) + (readMem(MEMORY, pointer+1) & 0xF) > 0xF else 0
             F[4] = int(SP + readMem(MEMORY, pointer +
-                        1, bank_controller) > 0xFF)
+                        1) > 0xFF)
             SP = SP + \
-                signed(readMem(MEMORY, pointer+1, bank_controller))
+                signed(readMem(MEMORY, pointer+1))
             pointer += 2
             cycle = 4
         case "JPHL":
@@ -1566,44 +1564,44 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "LDA16A":
             # print("LDA16A")
-            writeMem(MEMORY, (readMem(MEMORY, pointer+2, bank_controller) << 8)| readMem(MEMORY, pointer+1, bank_controller), A, bank_controller, game)
+            writeMem(MEMORY, (readMem(MEMORY, pointer+2) << 8)| readMem(MEMORY, pointer+1), A)
             pointer += 3
             cycle = 4
         case "XORA8":
             # print("XORA8")
             F[4:7] = [0, 0, 0]
-            A = A ^ readMem(MEMORY, pointer+1, bank_controller)
+            A = A ^ readMem(MEMORY, pointer+1)
             F[7] = int(A == 0)
             pointer += 2
             cycle = 2
         case "RST28H":
             # print("RST28H")
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1)& 0xFF)
             pointer = 0x28
             cycle = 4
         case "LDHAA8":
             # print("LDHAA8")
             # print(MEMORY[0xFF00+MEMORY[pointer+1]])
-            A = readMem(MEMORY, 0xFF00+readMem(MEMORY,pointer+1, bank_controller), bank_controller,keys)
+            A = readMem(MEMORY, 0xFF00+readMem(MEMORY,pointer+1),keys)
             pointer += 2
             cycle = 3
         case "POPAF":
             # print("POPAF")
-            F = readMem(MEMORY, SP, bank_controller)
+            F = readMem(MEMORY, SP)
             F = [int(x) for x in list('{0:08b}'.format(F))]
             F = F[::-1]
             F[0:4] = [0, 0, 0, 0]
             SP += 1
-            A = readMem(MEMORY, SP, bank_controller)
+            A = readMem(MEMORY, SP)
             SP += 1
             pointer += 1
             cycle = 3
         case "LDAHC":
             # print("LDAHC")
-            A = readMem(MEMORY, 0xFF00+C, bank_controller)
+            A = readMem(MEMORY, 0xFF00+C)
             pointer += 1
             cycle = 2
 
@@ -1616,17 +1614,17 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             # print("PUSHAF")
             # F has to be converted to a byte
             SP -= 1
-            writeMem(MEMORY, SP, A, bank_controller, game)
+            writeMem(MEMORY, SP, A)
             SP -= 1
             # make sure F is 8 BITs and not true or false
             F = [int(x) for x in F]
 
-            writeMem(MEMORY, SP, int("".join([str(x) for x in F[::-1]]), 2), bank_controller, game)
+            writeMem(MEMORY, SP, int("".join([str(x) for x in F[::-1]]), 2))
             pointer += 1
             cycle = 4
         case "ORA8":
             # print("ORA8")
-            A = A | readMem(MEMORY, pointer+1, bank_controller)
+            A = A | readMem(MEMORY, pointer+1)
             F[7] = int(A == 0)
             F[4:7] = [0, 0, 0]
             pointer += 2
@@ -1634,18 +1632,18 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
         case "RST30H":
             # print("RST30H")
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1)& 0xFF)
             pointer = 0x30
             cycle = 4
         case "LDHLSPR8":
             # print("LDHLSPR8")
             F[6:8] = [0, 0]
-            F[5] = 1 if (SP & 0xF) + (readMem(MEMORY, pointer+1, bank_controller) & 0xF) > 0xF else 0
-            F[4] = int(SP + readMem(MEMORY, pointer +1, bank_controller) > 0xFF)
-            L = (SP + signed(readMem(MEMORY, pointer+1, bank_controller))) & 0xFF
-            H = (SP + signed(readMem(MEMORY, pointer+1, bank_controller))) >> 8
+            F[5] = 1 if (SP & 0xF) + (readMem(MEMORY, pointer+1) & 0xF) > 0xF else 0
+            F[4] = int(SP + readMem(MEMORY, pointer +1) > 0xFF)
+            L = (SP + signed(readMem(MEMORY, pointer+1))) & 0xFF
+            H = (SP + signed(readMem(MEMORY, pointer+1))) >> 8
             pointer += 2
             cycle = 3
         case "LDSPHL":
@@ -1655,10 +1653,10 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 2
         case "LDAA16":
             # print("LDAA16")
-            l = readMem(MEMORY, pointer+1, bank_controller)
-            h = readMem(MEMORY, pointer+2, bank_controller)
+            l = readMem(MEMORY, pointer+1)
+            h = readMem(MEMORY, pointer+2)
             A = readMem(MEMORY, int.from_bytes(
-                [l, h], "little"), bank_controller)
+                [l, h], "little"))
             pointer += 3
             cycle = 4
         case "EI":
@@ -1668,18 +1666,18 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             cycle = 1
         case "CP":
             # print("CP")
-            F[7] = int(A == readMem(MEMORY, pointer+1, bank_controller))
+            F[7] = int(A == readMem(MEMORY, pointer+1))
             F[6] = 1
-            F[5] = int((A&0xf) < (readMem(MEMORY, pointer+1, bank_controller)&0xf))
-            F[4] = int(A < readMem(MEMORY, pointer+1, bank_controller))
+            F[5] = int((A&0xf) < (readMem(MEMORY, pointer+1)&0xf))
+            F[4] = int(A < readMem(MEMORY, pointer+1))
             pointer += 2
             cycle = 2
         case "RST38H":
             # print("RST38H")
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1) >> 8, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1) >> 8)
             SP -= 1
-            writeMem(MEMORY, SP, (pointer+1)& 0xFF, bank_controller, game)
+            writeMem(MEMORY, SP, (pointer+1)& 0xFF)
             pointer = 0x38
             cycle = 4
 
@@ -1687,7 +1685,7 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,key
             assert False, f"Unknown opcode: {code:02x}"
     return A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, HALT
 
-def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,game):
+def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer):
     match extra_opcodes[code]:
         case "RLCB":
             # print("RLCB")
@@ -1721,9 +1719,9 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RLCHL":
             # print("RLCHL")
-            val = readMem(MEMORY, joinHex(H,L), bank_controller)
+            val = readMem(MEMORY, joinHex(H,L))
             val,F=RLC(val,F)
-            writeMem(MEMORY, joinHex(H,L), val, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), val)
             pointer += 1
             cycle = 4
         case "RLCA":
@@ -1763,9 +1761,9 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RRCHL":
             # print("RRCHL")
-            val = readMem(MEMORY, joinHex(H,L), bank_controller)
+            val = readMem(MEMORY, joinHex(H,L))
             val,F=RRC(val,F)
-            writeMem(MEMORY, joinHex(H,L), val, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), val)
             pointer += 1
             cycle = 4
         case "RRCA":
@@ -1806,9 +1804,9 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RLHL":
             # print("RLHL")
-            val = readMem(MEMORY, joinHex(H,L), bank_controller)
+            val = readMem(MEMORY, joinHex(H,L))
             val,F=RL(val,F)
-            writeMem(MEMORY, joinHex(H,L), val, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), val)
             pointer += 1
             cycle = 4
         case "RLA":
@@ -1848,9 +1846,9 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RRHL":
             # print("RRHL")
-            val = readMem(MEMORY, joinHex(H,L), bank_controller)
+            val = readMem(MEMORY, joinHex(H,L))
             val,F=RR(val,F)
-            writeMem(MEMORY, joinHex(H,L), val, bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), val)
             pointer += 1
             cycle = 4
         case "RRA":
@@ -1890,8 +1888,8 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SLAHL":
             # print("SLAHL")
-            temp,F=SLA(readMem(MEMORY,joinHex(H,L),bank_controller),F)
-            writeMem(MEMORY,joinHex(H,L),temp,bank_controller, game)
+            temp,F=SLA(readMem(MEMORY,joinHex(H,L)),F)
+            writeMem(MEMORY,joinHex(H,L),temp)
             pointer += 1
             cycle = 4
         case "SLAA":
@@ -1931,8 +1929,8 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SRAHL":
             # print("SRAHL")
-            temp,F=SRA(readMem(MEMORY,joinHex(H,L),bank_controller),F)
-            writeMem(MEMORY,joinHex(H,L),temp,bank_controller, game)
+            temp,F=SRA(readMem(MEMORY,joinHex(H,L)),F)
+            writeMem(MEMORY,joinHex(H,L),temp)
             pointer += 1
             cycle = 4
         case "SRAA":
@@ -1972,8 +1970,8 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SWAPHL":
             # print("SWAPHL")
-            temp,F=SWAP(readMem(MEMORY,joinHex(H,L),bank_controller),F)
-            writeMem(MEMORY,joinHex(H,L),temp,bank_controller, game)
+            temp,F=SWAP(readMem(MEMORY,joinHex(H,L)),F)
+            writeMem(MEMORY,joinHex(H,L),temp)
             pointer += 1
             cycle = 4
         case "SWAPA":
@@ -2013,8 +2011,8 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SRLHL":
             # print("SRLHL")
-            temp,F=SRL(readMem(MEMORY,joinHex(H,L),bank_controller),F)
-            writeMem(MEMORY,joinHex(H,L),temp,bank_controller, game)
+            temp,F=SRL(readMem(MEMORY,joinHex(H,L)),F)
+            writeMem(MEMORY,joinHex(H,L),temp)
             pointer += 1
             cycle = 4
         case "SRLA":
@@ -2054,7 +2052,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "BIT0HL":
             # print("BIT0HL")
-            F=BIT(readMem(MEMORY, joinHex(H,L), bank_controller),0,F)
+            F=BIT(readMem(MEMORY, joinHex(H,L)),0,F)
             pointer += 1
             cycle = 3
         case "BIT0A":
@@ -2094,7 +2092,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "BIT1HL":
             # print("BIT1HL")
-            F=BIT(readMem(MEMORY, joinHex(H,L), bank_controller),1,F)
+            F=BIT(readMem(MEMORY, joinHex(H,L)),1,F)
             pointer += 1
             cycle = 3
         case "BIT1A":
@@ -2134,7 +2132,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "BIT2HL":
             # print("BIT2HL")
-            F=BIT(readMem(MEMORY, joinHex(H,L), bank_controller),2,F)
+            F=BIT(readMem(MEMORY, joinHex(H,L)),2,F)
             pointer += 1
             cycle = 3
         case "BIT2A":
@@ -2174,7 +2172,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "BIT3HL":
             # print("BIT3HL")
-            F=BIT(readMem(MEMORY, joinHex(H,L), bank_controller),3,F)
+            F=BIT(readMem(MEMORY, joinHex(H,L)),3,F)
             pointer += 1
             cycle = 3
         case "BIT3A":
@@ -2214,7 +2212,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "BIT4HL":
             # print("BIT4HL")
-            F=BIT(readMem(MEMORY, joinHex(H,L), bank_controller),4,F)
+            F=BIT(readMem(MEMORY, joinHex(H,L)),4,F)
             pointer += 1
             cycle = 3
         case "BIT4A":
@@ -2254,7 +2252,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "BIT5HL":
             # print("BIT5HL")
-            F=BIT(readMem(MEMORY, joinHex(H,L), bank_controller),5,F)
+            F=BIT(readMem(MEMORY, joinHex(H,L)),5,F)
             pointer += 1
             cycle = 3
         case "BIT5A":
@@ -2294,7 +2292,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "BIT6HL":
             # print("BIT6HL")
-            F=BIT(readMem(MEMORY, joinHex(H,L), bank_controller),6,F)
+            F=BIT(readMem(MEMORY, joinHex(H,L)),6,F)
             pointer += 1
             cycle = 3
         case "BIT6A":
@@ -2334,7 +2332,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "BIT7HL":
             # print("BIT7HL")
-            F=BIT(readMem(MEMORY, joinHex(H,L), bank_controller),7,F)
+            F=BIT(readMem(MEMORY, joinHex(H,L)),7,F)
             pointer += 1
             cycle = 3
         case "BIT7A":
@@ -2374,7 +2372,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RES0HL":
             # print("RES0HL")
-            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L), bank_controller),0), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L)),0))
             pointer += 1
             cycle = 4
         case "RES0A":
@@ -2414,7 +2412,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RES1HL":
             # print("RES1HL")
-            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L), bank_controller),1), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L)),1))
             pointer += 1
             cycle = 4
         case "RES1A":
@@ -2454,7 +2452,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RES2HL":
             # print("RES2HL")
-            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L), bank_controller),2), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L)),2))
             pointer += 1
             cycle = 4
         case "RES2A":
@@ -2494,7 +2492,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RES3HL":
             # print("RES3HL")
-            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L), bank_controller),3), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L)),3))
             pointer += 1
             cycle = 4
         case "RES3A":
@@ -2534,7 +2532,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RES4HL":
             # print("RES4HL")
-            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L), bank_controller),4), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L)),4))
             pointer += 1
             cycle = 4
         case "RES4A":
@@ -2574,7 +2572,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RES5HL":
             # print("RES5HL")
-            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L), bank_controller),5), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L)),5))
             pointer += 1
             cycle = 4
         case "RES5A":
@@ -2614,7 +2612,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RES6HL":
             # print("RES6HL")
-            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L), bank_controller),6), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L)),6))
             pointer += 1
             cycle = 4
         case "RES6A":
@@ -2654,7 +2652,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "RES7HL":
             # print("RES7HL")
-            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L), bank_controller),7), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), RES(readMem(MEMORY, joinHex(H,L)),7))
             pointer += 1
             cycle = 4
         case "RES7A":
@@ -2694,7 +2692,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SET0HL":
             # print("SET0HL")
-            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L), bank_controller),0), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L)),0))
             pointer += 1
             cycle = 4
         case "SET0A":
@@ -2734,7 +2732,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SET1HL":
             # print("SET1HL")
-            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L), bank_controller),1), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L)),1))
             pointer += 1
             cycle = 4
         case "SET1A":
@@ -2774,7 +2772,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SET2HL":
             # print("SET2HL")
-            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L), bank_controller),2), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L)),2))
             pointer += 1
             cycle = 4
         case "SET2A":
@@ -2814,7 +2812,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SET3HL":
             # print("SET3HL")
-            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L), bank_controller),3), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L)),3))
             pointer += 1
             cycle = 4
         case "SET3A":
@@ -2854,7 +2852,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SET4HL":
             # print("SET4HL")
-            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L), bank_controller),4), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L)),4))
             pointer += 1
             cycle = 4
         case "SET4A":
@@ -2894,7 +2892,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SET5HL":
             # print("SET5HL")
-            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L), bank_controller),5), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L)),5))
             pointer += 1
             cycle = 4
         case "SET5A":
@@ -2934,7 +2932,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SET6HL":
             # print("SET6HL")
-            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L), bank_controller),6), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L)),6))
             pointer += 1
             cycle = 4
         case "SET6A":
@@ -2974,7 +2972,7 @@ def handle_extra_opcodes(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_control
             cycle = 2
         case "SET7HL":
             # print("SET7HL")
-            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L), bank_controller),7), bank_controller, game)
+            writeMem(MEMORY, joinHex(H,L), SET(readMem(MEMORY, joinHex(H,L)),7))
             pointer += 1
             cycle = 4
         case "SET7A":

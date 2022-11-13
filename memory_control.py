@@ -7,10 +7,18 @@ with open("config.txt", "r") as f:
     f=open(config[0].split("=")[1], "rb")
     game=f.read()
     f.close()
+cartridge_type = game[0x147]
+if cartridge_type == 0x00:
+    romtype = 0
+elif cartridge_type == 0x13:
+    romtype = 3
+elif cartridge_type == 0x1:
+    romtype = 0
+else:
+    assert False, f"Cartridge type not supported: {cartridge_type}"
 
 
-
-def readMem(Mem, adr, romtype, keys=0, game=game):
+def readMem(Mem, adr, keys=0):
     global mbcRomNumber
     #special cases:
     # keys
@@ -45,7 +53,7 @@ def readMem(Mem, adr, romtype, keys=0, game=game):
 mbcRamEnable = False
 mbcRomMode = 0
 
-def writeMem(Mem, adr, val, romtype, game):
+def writeMem(Mem, adr, val):
     global mbcRamEnable
     global mbcRomNumber
     global mbcRomMode
