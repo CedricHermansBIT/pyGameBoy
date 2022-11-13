@@ -1,0 +1,2 @@
+game=02-interrupts.gb
+game=Pokemon - Red Version.gb

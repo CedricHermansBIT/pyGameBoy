@@ -11,7 +11,7 @@ from utils import *
 from cpu import *
 #from read_header import read_header
 
-log = 0
+log = 1
 ppu = 1
 
 
@@ -33,7 +33,7 @@ if log:
     disassembled_file = open("disassembled.txt", "w")
 
 
-def runCode(pointer, interrupt_table):
+def runCode(pointer, game):
     global A, B, C, D, E, F, H, L, SP, MEMORY, IME, HALT, CLOCKSUM, TIMER_CLOCKSUM, FC
 
 
@@ -96,7 +96,7 @@ def runCode(pointer, interrupt_table):
                 elif event.key == pygame.K_BACKSPACE:
                     keys["SELECT"] = 0
                 # set interupt
-                writeMem(MEMORY, 0xFF0F, readMem(MEMORY, 0xFF0F, bank_controller) | 0x10, bank_controller)
+                writeMem(MEMORY, 0xFF0F, readMem(MEMORY, 0xFF0F, bank_controller) | 0x10, bank_controller, game)
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT:
                     keys["RIGHT"] = 1
@@ -115,8 +115,6 @@ def runCode(pointer, interrupt_table):
                 elif event.key == pygame.K_BACKSPACE:
                     keys["SELECT"] = 1
 
-        # if pointer == 0x86:
-        #    print("debug step")
         if time.time() - dt > 1.0/60.0:
             if MEMORY[0xFF40] & 0x80:
                 counter = 0
@@ -131,7 +129,6 @@ def runCode(pointer, interrupt_table):
                     MEMORY[0xFF44] += 1
                 if MEMORY[0xFF44] >= 153:
                     MEMORY[0xFF44] = 0
-                    MEMORY[0xFF0F] &= 0x0
             if cycles >= MAXCYCLE:
                 continue
 
@@ -139,8 +136,6 @@ def runCode(pointer, interrupt_table):
             print(f"End of file reached, pointer: {pointer}")
             break
         code = readMem(MEMORY, pointer, bank_controller)
-        # if pointer>0x4000:
-        #    print(hex(code),hex(pointer))
         if not HALT:
             ctime=time.time()
             # check if code is not in opcodes or if the prefix is set and it is not in extropcodes
@@ -158,9 +153,8 @@ def runCode(pointer, interrupt_table):
                 exit(1)
             if not prefix:
                 if log:
-                    disassembled_file.write(
-                        f"PC: {pointer:04x}\t{opcodes[code]:<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1,bank_controller):02x}\tPC+2: {readMem(MEMORY,pointer+2,bank_controller):02x}")
-                A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, prefix = handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,keys)
+                    disassembled_file.write(f"PC: {pointer:04x}\t{opcodes[code]:<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1,bank_controller):02x}\tPC+2: {readMem(MEMORY,pointer+2,bank_controller):02x}")
+                A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, prefix, halt = handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,bank_controller,keys,game)
                 if log:
                     disassembled_file.write(
                         f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n")
@@ -172,25 +166,23 @@ def runCode(pointer, interrupt_table):
                 if log:
                     disassembled_file.write(
                         f"PC: {pointer:04x}\t{extra_opcodes[code]:<8}\tCode: {code:02x}\tPC+1: {readMem(MEMORY,pointer+1,bank_controller):02x}\tPC+2: {readMem(MEMORY,pointer+2,bank_controller):02x}")
-                A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle = handle_extra_opcodes(code, A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, bank_controller)
+                A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle = handle_extra_opcodes(code, A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, bank_controller,game)
                 if log:
                     disassembled_file.write(
                         f"\tAF: {A:02x}{int(''.join([str(x) for x in F[::-1]]),2):02x}\tBC: {B:02x}{C:02x}\tDE: {D:02x}{E:02x}\tHL: {H:02x}{L:02x}\tSP: {SP:04x}\tF: {F}\tIME: {IME}\tSP: {SP:04x}\tTime taken: {time.time()-ctime}\n")
                 prefix = False
         else:
             cycle = 1
-            # print("Halting")
+
         cycles += cycle
-        MEMORY, CLOCKSUM, TIMER_CLOCKSUM = handle_timer(
-            cycle, MEMORY, CLOCKSUM, TIMER_CLOCKSUM)
-        pointer, MEMORY, IME, SP, HALT = handle_interrupts(
-            MEMORY, pointer, IME, SP, HALT, bank_controller)
+        handle_timer(cycle, MEMORY)
+        pointer, MEMORY, IME, SP, HALT = handle_interrupts(MEMORY, pointer, IME, SP, HALT, bank_controller, game)
 
         # print(f"F: {F}")
         if pointer == 0x100 and boot:
             boot = False
             # copy the interupt table to the beginning of the memory
-            MEMORY[0:0x100] = interrupt_table
+            MEMORY[0:0x100] = game[0:0x100]
 
 
 f = open("DMG_ROM.bin", "rb")
@@ -199,16 +191,19 @@ f.close()
 # print(content)
 MEMORY[0x0:0x100] = content
 
-f = open("Dr. Mario (World).gb", "rb")
-#f=open("Pokemon - Red Version.gb", "rb")
+#f = open("Dr. Mario (World).gb", "rb")
+with open("config.txt", "r") as f:
+    config=f.read().splitlines()
+
+f=open(config[0].split("=")[1], "rb")
 #f=open("instr_timing.gb", "rb")
 #f=open("cpu_instrs.gb", "rb")
-content2 = f.read()
+game = f.read()
 f.close()
 # exit()
 # copy header (0x100:0x0150) to memory
-MEMORY += content2[0x100:]
+MEMORY += game[0x100:0x8000]
 if len(MEMORY) < 0x10000:
     MEMORY += [0]*(0x10000-len(MEMORY))
-
-runCode(0x0, interrupt_table=content2[0:0x100])
+if __name__=="__main__":
+    runCode(0x0, game)
