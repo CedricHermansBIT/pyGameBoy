@@ -115,8 +115,9 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,keys):
             F[7] = 0
             pointer += 1
             cycle = 1
-        case "STOP0":
+        case "STOP":
             # print("STOP0")
+            #exit()
             pointer += 2
             cycle = 0
         case "LDDED16":
@@ -441,10 +442,13 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,keys):
                 cycle = 2
         case "ADDHLSP":
             # print("ADDHLSP")
-            F[5] = 1 if (joinHex(H,L) & 0x7FF) + \
-                (SP & 0x7FF) > 0x7FF else 0
+            
+            F[5] = 1 if ((joinHex(H,L) & 0x7FF) + \
+                (SP & 0x7FF)) > 0x7FF else 0
             H, L = splitHex(joinHex(H,L) + SP)
-            F[4] = int(joinHex(H,L) + SP > 0xFFFF)
+            F[4] = int(joinHex(H,L) > 0xFFFF)
+            L &= 0xFF
+            H &= 0xFF
             F[6] = 0
             pointer += 1
             cycle = 2
@@ -764,14 +768,15 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,keys):
             cycle = 2
         case "HALT":
             # print("HALT")
-            if IME:
-                HALT = True
+            if IME == 1:
+                HALT = 1
                 pointer += 1
+                cycle = 1
             else:
-                if MEMORY[0xFFFF] or MEMORY[0xFF0F]:
+                cycle = 1
+                if readMem(MEMORY, 0xFFFF) & readMem(MEMORY, 0xFF0F):
+                    A, B, C, D, E, H, L, F, SP, IME, MEMORY, pointer, cycle, HALT=handle_opcode(readMem(MEMORY, pointer),A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer+1,keys)
                     pointer += 1
-
-            cycle = 1
         case "LDHLA":
             # Store value in A into memory address HL
             # print("LDHLA")
@@ -1550,12 +1555,15 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,keys):
         case "ADDSPR8":
             # print("ADDSPR8")
             F[6:8] = [0, 0]
-            F[5] = 1 if (
-                SP & 0xF) + (readMem(MEMORY, pointer+1) & 0xF) > 0xF else 0
-            F[4] = int(SP + readMem(MEMORY, pointer +
-                        1) > 0xFF)
-            SP = SP + \
-                signed(readMem(MEMORY, pointer+1))
+            val=signed(readMem(MEMORY, pointer+1))
+            if val>=0:
+                F[4] = int(((SP & 0xFF) + val) > 0xFF)
+                F[5] = int(((SP & 0xF) + (val&0xF)) > 0xF)
+            else:
+                F[4] = int(((SP + val) & 0xff) <= (SP & 0xff))
+                F[5] = int(((SP + val) & 0xf) <= (SP & 0xf))
+            SP = SP + val
+            SP&=0xFFFF
             pointer += 2
             cycle = 4
         case "JPHL":
@@ -1640,10 +1648,14 @@ def handle_opcode(code,A,B,C,D,E,H,L,F,SP,IME,MEMORY,pointer,keys):
         case "LDHLSPR8":
             # print("LDHLSPR8")
             F[6:8] = [0, 0]
-            F[5] = 1 if (SP & 0xF) + (readMem(MEMORY, pointer+1) & 0xF) > 0xF else 0
-            F[4] = int(SP + readMem(MEMORY, pointer +1) > 0xFF)
-            L = (SP + signed(readMem(MEMORY, pointer+1))) & 0xFF
-            H = (SP + signed(readMem(MEMORY, pointer+1))) >> 8
+            val=signed(readMem(MEMORY, pointer+1))
+            if val>=0:
+                F[4] = int(((SP & 0xFF) + val) > 0xFF)
+                F[5] = int(((SP & 0xF) + (val&0xF)) > 0xF)
+            else:
+                F[4] = int(((SP + val) & 0xff) <= (SP & 0xff))
+                F[5] = int(((SP + val) & 0xf) <= (SP & 0xf))
+            H,L = splitHex((SP + signed(readMem(MEMORY, pointer+1)))&0xFFFF)
             pointer += 2
             cycle = 3
         case "LDSPHL":
