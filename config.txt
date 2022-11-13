@@ -1,2 +1,2 @@
-game=02-interrupts.gb
+game=Dr. Mario (World).gb
 game=Pokemon - Red Version.gb
